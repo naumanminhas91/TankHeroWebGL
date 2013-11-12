@@ -1,0 +1,117 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<style>
+			body {
+				margin: 0px;
+				padding: 0px;
+			}
+		</style>
+	</head>
+	
+	<body>
+		<div id="container"></div>
+		
+		<script src="http://www.html5canvastutorials.com/libraries/three.min.js"></script>
+		<script defer="defer">
+      
+			var time;
+			var renderer;
+			var camera;
+			var scene;
+			var plane;
+			var wall1;
+			// this function is executed on each animation frame
+			
+			
+			function createWall1()
+			{
+				
+				var texture = THREE.ImageUtils.loadTexture( 'images.jpg' );
+				texture.wrapS = THREE.RepeatWrapping;
+				texture.wrapT = THREE.RepeatWrapping;
+				
+				texture.repeat.set(1, 0.3);
+				
+				var material = new THREE.MeshLambertMaterial( { map: texture } );
+			
+				wall1 = new THREE.Mesh(new THREE.CubeGeometry(100, 40 , 10), material );
+				wall1.position.y = 10;
+				wall1.overdraw = true;
+				scene.add(wall1);
+			}
+			
+			function animate()
+			{
+				
+				// update
+				time = (new Date()).getTime();
+			
+	 
+				// render
+				renderer.render(scene, camera);
+		
+				// request new frame
+				requestAnimationFrame(function(){
+					animate();
+				});
+			}
+
+			// renderer
+			renderer = new THREE.WebGLRenderer();
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			document.body.appendChild(renderer.domElement);
+ 
+			// camera
+			camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+			
+			//Camera Loc and Orientation
+			camera.position.y = 400;
+			camera.position.z = 400;
+			//camera.position.x = 400;
+			
+			console.log ( camera.position.x);
+			camera.rotation.x = -45 * (Math.PI / 180);
+			//camera.rotation.y = 30 * (Math.PI / 180);
+			
+			
+ 
+			// scene
+			scene = new THREE.Scene();
+ 
+			//Material
+				
+			
+			var texture = THREE.ImageUtils.loadTexture( 'crate.jpg' );
+			texture.wrapS = THREE.RepeatWrapping;
+			texture.wrapT = THREE.RepeatWrapping;
+			texture.repeat.set(8,8);
+			
+			var material = new THREE.MeshLambertMaterial( { map: texture } );
+			
+ 			// plane
+			plane = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), material);
+			plane.overdraw = true;
+			scene.add(plane);
+
+			//Plane View and Orientation
+			plane.rotation.x = -90 * (Math.PI / 180);
+
+			// add subtle ambient lighting
+			  var ambientLight = new THREE.AmbientLight(0xbbbbbb);
+			  scene.add(ambientLight);
+			  
+			  // directional lighting
+			  var directionalLight = new THREE.DirectionalLight(0xffffff);
+			  directionalLight.position.set(1, 1, 1).normalize();
+			  scene.add(directionalLight);
+			
+			createWall1();
+			// start animation
+			animate();
+			
+			
+			
+    </script>
+  </body>
+</html>
