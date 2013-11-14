@@ -21,21 +21,24 @@
 			var scene;
 			var plane;
 			var wall1;
+
+
+
 			// this function is executed on each animation frame
-			
+
 			
 			function createWall1()
 			{
 				
-				var texture = THREE.ImageUtils.loadTexture( 'images.jpg' );
+				var texture = THREE.ImageUtils.loadTexture( 'img/wall.jpg' );
 				texture.wrapS = THREE.RepeatWrapping;
 				texture.wrapT = THREE.RepeatWrapping;
 				
-				texture.repeat.set(1, 0.3);
+				texture.repeat.set(30, 2);
 				
 				var material = new THREE.MeshLambertMaterial( { map: texture } );
 			
-				wall1 = new THREE.Mesh(new THREE.CubeGeometry(100, 40 , 10), material );
+				wall1 = new THREE.Mesh(new THREE.CubeGeometry(500, 40 , 10), material );
 				wall1.position.y = 10;
 				wall1.overdraw = true;
 				scene.add(wall1);
@@ -82,7 +85,7 @@
 			//Material
 				
 			
-			var texture = THREE.ImageUtils.loadTexture( 'crate.jpg' );
+			var texture = THREE.ImageUtils.loadTexture( 'img/floor.jpg' );
 			texture.wrapS = THREE.RepeatWrapping;
 			texture.wrapT = THREE.RepeatWrapping;
 			texture.repeat.set(8,8);
@@ -106,7 +109,30 @@
 			  directionalLight.position.set(1, 1, 1).normalize();
 			  scene.add(directionalLight);
 			
+			// wall
 			createWall1();
+			
+
+			// loading models
+			var loader = new THREE.JSONLoader();
+			 
+			var createMesh = function( geometry )
+			{
+
+				var texture = THREE.ImageUtils.loadTexture( 'img/floor.jpg' );
+				
+				var material = new THREE.MeshLambertMaterial( { map: texture } );
+
+
+			    var zmesh = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial({ map: texture } ) );
+			    zmesh.position.set( 0, 0, 0 );
+			    zmesh.scale.set( 3, 3, 3 );
+			    zmesh.overdraw = true;
+			    scene.add( zmesh );
+			};
+			 
+			loader.load( "pyScripts/mesh.js", createMesh );
+
 			// start animation
 			animate();
 			
