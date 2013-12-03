@@ -115,7 +115,7 @@ Examples =
                 blendStyle   : THREE.AdditiveBlending,  
                 
                 particlesPerSecond : 60,
-                particleDeathAge   : 0.3,                
+                particleDeathAge   : 1.5,                
                 emitterDeathAge    : 60
         },
         

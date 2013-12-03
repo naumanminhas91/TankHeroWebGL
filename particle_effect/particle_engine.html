@@ -35,7 +35,7 @@
 
 <div id="infoButton"></div>
 <div id="infoBox" title="Demo Information">
-This three.js demo is part of a collection at
+
 <a href="http://stemkoski.github.io/Three.js/">http://stemkoski.github.io/Three.js/</a>
 </div>
 <!-- ------------------------------------------------------------ -->
@@ -118,7 +118,8 @@ function init()
 
         
         this.engine = new ParticleEngine();
-        engine.setValues( Examples.smoke );
+        engine.setValues( Examples.fireball );
+        //engine.setValues( Examples.smoke );
         engine.initialize();
         
        // gui.open();        
@@ -127,18 +128,18 @@ function init()
 function animate() 
 {
     requestAnimationFrame( animate );
-        render();                
-        update();
+    render();                
+    update();
 }
 
 function restartEngine(parameters)
 {
-        resetCamera();
-        
-        engine.destroy();
-        engine = new ParticleEngine();
-        engine.setValues( parameters );
-        engine.initialize();
+    resetCamera();
+
+    engine.destroy();        
+    engine = new ParticleEngine();
+    engine.setValues( parameters );
+    engine.initialize();
 }
 
 function resetCamera()
