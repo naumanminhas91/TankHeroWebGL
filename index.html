@@ -1,0 +1,536 @@
+ <!DOCTYPE HTML>
+  <html>
+    <head>
+      <style>
+        body {
+          margin: 0px;
+          padding: 0px;
+	     overflow: hidden
+        }
+      </style>
+    </head>
+    
+    <body>
+      <div id="container"></div>
+      
+      <script type="text/javascript" src="js/three.min.js"></script>
+	  <script type="text/javascript" src="js/physi.js"></script>
+
+	  <script src="particle_effect/particle_engine.js"></script>
+	  <script src="particle_effect/particle_engine_examples.js"></script>
+	  <script src="particle_effect/Detector.js"></script>
+      
+      <script defer="defer">
+        
+		//Physijs.scripts.worker = 'js/physijs_worker.js';
+		//Physijs.scripts.ammo = 'js/ammo.js';
+	
+        var time;
+        var renderer;
+        var camera;
+        var scene;
+        var plane;
+		var zmesh;
+		
+		/////////////////////////
+		//Tank
+		var tank0;
+		var x=0 ;
+		var y=0 ;
+		var angle=90;
+		var velocity;
+		
+		var tankBase;
+		var tankTop;
+		var tankTrunk;
+		
+		var bullets= new Array();
+		
+		var v1 = new Array();
+		var v2=  new Array();
+		var v3 = new Array();
+		var v4  = new Array();
+		var count=0;
+
+		
+		
+        // this function is executed on each animation frame
+        
+        
+        function createWall(x1,y1,x2,y2,file,height)
+        {
+          
+			if (x2<x1)
+			{
+				var t = x2;
+				x2=x1;
+				x1=t;
+			}
+			if (y2<y1)
+			{
+				var t = y2;
+				y2=y1;
+				y1=t;
+			}
+          var posX=0;
+			var posY=0;
+			var diffX = x2-x1;
+			var diffY = y2-y1;
+			
+			diffX = (diffX==0)?20 : diffX;
+			diffY = (diffY==0)?20 : diffY;
+			
+			
+			//var texture = THREE.ImageUtils.loadTexture( 'img/images1.jpg' );
+			//texture.wrapS = THREE.RepeatWrapping;
+			//texture.wrapT = THREE.RepeatWrapping;
+			//texture.repeat.set(1,2);
+			posX= x1+diffX/2;
+			posY= y1+diffY/2;
+			
+			
+			var material = Physijs.createMaterial(
+			new THREE.MeshLambertMaterial({ map: THREE.ImageUtils.loadTexture( file ) }),
+			.8, // high friction
+			.4 // low restitution
+		);
+		
+		
+			var wall = new THREE.Mesh(new THREE.CubeGeometry(diffX, height , diffY), material );
+			
+			wall.castShadow = true;
+			
+			wall.overdraw = true;
+			scene.add(wall);
+			
+			wall.position.x = posX-500;
+			wall.position.z = posY-500;
+			if (height==30)
+			{
+				wall.position.y = 15;
+			}
+			else if (height==10)
+				wall.position.y = 4;
+				
+			if (height==30)
+			{
+				v1[count] = posX-500-diffX/2;
+				v2[count] = posX-500+diffX/2;
+				v3[count] = posY-500-diffY/2;
+				v4[count] = posY-500+diffY/2;
+				
+				count++;
+			}
+				
+			return wall;
+        }
+        
+		function checkCollision(x , y)
+		{
+			var posX = new Array();
+			var posY = new Array();
+			
+			posX[0] = (x+40*Math.cos(angle* (Math.PI / 180)))+20*Math.cos((90-angle)* (Math.PI / 180));
+			posY[0] = (y+45*Math.sin(angle* (Math.PI / 180)))+20*Math.sin((90-angle)* (Math.PI / 180));
+			
+			posX[1] = (x+40*Math.cos(angle* (Math.PI / 180)))-20*Math.cos((90-angle)* (Math.PI / 180));
+			posY[1] = (y+45*Math.sin(angle* (Math.PI / 180)))-20*Math.sin((90-angle)* (Math.PI / 180));
+			
+			posX[2] = (x-50*Math.cos(angle* (Math.PI / 180)))+20*Math.cos((90-angle)* (Math.PI / 180));
+			posY[2] = (y-45*Math.sin(angle* (Math.PI / 180)))+20*Math.sin((90-angle)* (Math.PI / 180));
+			
+			posX[3] = (x-50*Math.cos(angle* (Math.PI / 180)))-20*Math.cos((90-angle)* (Math.PI / 180));
+			posY[3] = (y-45*Math.sin(angle* (Math.PI / 180)))-20*Math.sin((90-angle)* (Math.PI / 180));
+			
+			
+			//30,20
+			for (i=0;i<v1.length;i++)
+			{
+				for (j=0;j<4;j++)
+				{
+					if (posX[j]<v2[i] && posX[j]>v1[i] && posY[j]<v4[i] && posY[j]>v3[i] )
+					{
+						console.log('collision');
+						console.log(x,y);
+						console.log(posX[j],posY[j]);
+						console.log( v1[i],v2[i],v3[i],v4[i]);
+						console.log(j);
+						
+						
+						return true;
+					}
+				
+				}
+				
+			}
+			return false;
+		
+		}
+	//// join	
+	function update()
+	{
+
+	    var dt = 0.02 ;//clock.getDelta();
+	    enginex.update( dt * 0.5 );    
+	    
+	}
+
+	function particleEngine(){
+
+	        
+	        this.pEngine = new ParticleEngine();
+	        //engine.setValues( Examples.fireball );
+	        pEngine.setValues( Examples.smoke );
+	        pEngine.initialize();
+	        
+	       // gui.open();        
+	        return pEngine;
+
+
+	}
+
+
+	// joni
+
+        function animate()
+        {
+			
+			update();
+			
+			// update
+          time = (new Date()).getTime();
+			
+			
+			if (velocity==1)
+			{
+				x -= 3*Math.cos(angle* (Math.PI / 180));
+				y -= 3*Math.sin(angle* (Math.PI / 180));
+				
+			}
+			else if (velocity ==-1)
+			{
+				x += 3*Math.cos(angle* (Math.PI / 180));
+				y += 3*Math.sin(angle* (Math.PI / 180));
+				
+			}
+		tankBase.position.x = x;
+		tankBase.position.z = y ;
+		tankBase.rotation.y = -angle* (Math.PI/180);
+
+
+		///////////////////////////
+		enginex.positionBase.x = x - 10;
+		enginex.positionBase.z = y - 10;
+		
+		tankTop.rotation.y = tankBase.rotation.y;
+		tankTop.position.x = tankBase.position.x  -  40*Math.cos(angle* (Math.PI / 180));
+		tankTop.position.z = tankBase.position.z  -  30*Math.sin(angle* (Math.PI / 180));
+		if( mesh!=null)
+		{
+			mesh.position.x=x;
+			mesh.position.z=y;
+			mesh.rotation.y= -angle* (Math.PI/180)-Math.PI/2;
+		}
+		if (checkCollision(tankBase.position.x,tankBase.position.z))
+		{
+			if (velocity==1)
+			{
+				x += 3*Math.cos(angle* (Math.PI / 180));
+				y += 3*Math.sin(angle* (Math.PI / 180));
+				
+			}
+			else if (velocity ==-1)
+			{
+				x -= 3*Math.cos(angle* (Math.PI / 180));
+				y -= 3*Math.sin(angle* (Math.PI / 180));
+				
+			}
+		tankBase.position.x = x;
+		tankBase.position.z = y ;
+		mesh.position.x=x;
+		mesh.position.z=y;
+		//tankBase.rotation.y = angle* (Math.PI/180);
+		
+		//tankTop.rotation.y = tankBase.rotation.y;
+		tankTop.position.x = tankBase.position.x  -  40*Math.cos(angle* (Math.PI / 180));
+		tankTop.position.z = tankBase.position.z  -  30*Math.sin(angle* (Math.PI / 180));
+		}
+		
+		for (i=0; i<bullets.length; i++)
+		{
+		
+		
+		}
+		
+         // render
+          renderer.render(scene, camera);
+      
+          // request new frame
+          requestAnimationFrame(function(){
+            animate();
+          });
+        }
+  
+		function setCam( x , y)
+		{
+			
+		
+		}
+
+
+
+
+		
+        // renderer
+        renderer = new THREE.WebGLRenderer({
+        	antialias: true
+    	});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+		renderer.shadowMapEnabled = true;
+		renderer.shadowMapSoft = true;
+
+		renderer.shadowCameraNear = 3;
+		//renderer.shadowCameraFar = camera.far;
+		renderer.shadowCameraFov = 50;
+
+		renderer.shadowMapBias = 0.0039;
+		renderer.shadowMapDarkness = 0.5;
+		renderer.shadowMapWidth = 1024;
+		renderer.shadowMapHeight = 1024;
+
+
+   
+        // camera
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+        
+        //Camera Loc and Orientation
+        camera.position.y = 700;
+        camera.position.z = 300;
+        //camera.position.x = 400;
+        
+        console.log ( camera.position.x);
+        camera.rotation.x = -72 * (Math.PI / 180);
+        //camera.rotation.y = 30 * (Math.PI / 180);
+        
+        
+   
+        // scene
+        scene = new THREE.Scene();
+
+		var light = new THREE.DirectionalLight(0xffffff, 0.3);
+        //light.position = camera.position;
+        light.position.y= 500;
+        light.position.x= 600;
+
+	    light.castShadow = true;
+		light.shadowDarkness = 0.5;
+
+	    scene.add(light);
+		
+
+
+
+
+
+        enginex = particleEngine();
+   
+        //Material of Plan
+         
+		var material = Physijs.createMaterial(
+			new THREE.MeshLambertMaterial({ map: THREE.ImageUtils.loadTexture( 'img/crate.jpg' ) }),
+			.8, // high friction
+			.4 // low restitution
+		);
+		material.map.wrapS = material.map.wrapT = THREE.RepeatWrapping;
+		material.map.repeat.set( 8, 8 );
+		
+		
+		var ground_geometry = new THREE.PlaneGeometry( 1000, 1000, 100, 100 );
+		for ( var i = 0; i < ground_geometry.vertices.length; i++ ) {
+			var vertex = ground_geometry.vertices[i];
+			//vertex.y = NoiseGen.noise( vertex.x / 30, vertex.z / 30 ) * 1;
+		}
+		ground_geometry.computeFaceNormals();
+		ground_geometry.computeVertexNormals();
+		
+         // plane
+		 plane = new Physijs.HeightfieldMesh(
+				ground_geometry,
+				material,
+				0 // mass
+		);
+		//ground.rotation.x = -Math.PI / 2;
+		plane.receiveShadow = true;
+		scene.add( plane );
+        // plane = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), material);
+        //plane.overdraw = true;
+        //scene.add(plane);
+   
+        //Plane View and Orientation
+        plane.rotation.x = -90 * (Math.PI / 180);
+  
+        // add subtle ambient lighting
+          var ambientLight = new THREE.AmbientLight(0xbbbbbb);
+          scene.add(ambientLight);
+          
+          // directional lighting
+          //var directionalLight = new THREE.DirectionalLight(0xffffff);
+          //directionalLight.position.set(1, 1, 1).normalize();
+          //scene.add(directionalLight);
+        
+		//Boundaries
+        var wall1 = createWall(0 , 0 , 1000 , 0 , 'img/images1.jpg',30);
+		var wall2 = createWall( 0, 0, 0 , 1000, 'img/images1.jpg',30);
+		var wall3 = createWall ( 990, 0, 990 , 1000, 'img/images1.jpg',30);
+		var wall4 = createWall ( 0 , 990, 1000, 990,'img/images1.jpg',30);
+			
+		//Inner Walls
+		var wall5 = createWall ( 0,400 , 500 , 400 ,'img/images1.jpg',30);
+		var wall6 = createWall ( 500,700 , 1000 , 700 ,'img/images1.jpg',30);
+		var wall7 = createWall ( 300 , 600 , 300 , 900 ,'img/images1.jpg',30);
+		var wall8 = createWall ( 700 , 500 , 700 , 100 ,'img/images1.jpg',30);
+        // start animation
+		
+
+///////////////////////////////////////////////////////////////////////		
+		
+		
+		// loading models
+      var loaderx = new THREE.JSONLoader();
+
+      var tank;
+
+      var zmesh;
+      var done = 0;
+       
+      var createMesh = function( geometry )
+      {
+
+        var texture = THREE.ImageUtils.loadTexture( 'img/images.jpg' );
+        
+        var material = new THREE.MeshLambertMaterial( { map: texture } );
+
+
+          zmesh = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial({ map: texture } ) );
+          zmesh.position.set( 0, 0, 0 );
+          zmesh.scale.set( 3, 3, 3 );
+          zmesh.overdraw = true;
+
+          zmesh.castShadow = true;
+          //scene.add( zmesh );
+
+          tank = zmesh;
+          done = 1;
+          return zmesh;
+      };
+       
+      
+      //loader.load( "pyScripts/mesh.js",createMesh );
+
+      /////////////////////////////
+
+      var mesh;
+      function makeHandler(meshName) {
+          return function(geometry) {
+
+              var texture = THREE.ImageUtils.loadTexture( 'img/images.jpg' );
+
+              mesh = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial({ map: texture } ) );
+              //mesh.scale.set(0.2, 0.2, 0.2);
+              //mesh.doubleSided = true;
+
+              mesh.position.set( 0, 0, 0 );
+              mesh.scale.set( 1, 1, 1 );
+              mesh.overdraw = true;
+              mesh.castShadow = true;
+              mesh.rotation.x = Math.PI * 0.1;
+
+              scene.add(mesh);
+              meshes[meshName] = mesh;
+          };
+      }
+
+      // Load the JSON files
+      var meshes = new Object();
+      var jsonFileNames = ['pyScripts/mesh.js'];
+      for(var i = 0; i < jsonFileNames.length; i++){
+          var loader = new THREE.JSONLoader();
+          var meshName = jsonFileNames[i].split("/")[1].split(".")[0];
+          loader.load(jsonFileNames[i], makeHandler(meshName));
+      }
+
+		
+		
+		
+		
+///////////////////////////////////////////////////////////////////////				
+		
+		
+		tankBase = createWall(500 , 500 , 560 , 540 , 'img/images.jpg',20);
+		tankTop = createWall(550 , 515 , 590 , 525 , 'img/images3.jpg',10);
+		tankBase.scale.set(0,0,0);
+		tankTop.scale.set(0,0,0);
+		//530, 520; 570,520 ;545
+		
+		document.addEventListener('keydown', function( ev ) {
+					switch ( ev.keyCode ) {
+						case 37: // left
+							angle-=3;
+							break;
+
+						case 38: // forward
+							velocity=1;
+							break;
+
+						case 39: // right
+							angle+=3;
+							break;
+
+						case 40: // back
+							velocity=-1;
+							break;
+						case 32:
+							var texture = THREE.ImageUtils.loadTexture( 'img/images.jpg' );
+							var sphere = new THREE.Mesh(new THREE.SphereGeometry(8, 10, 10), new THREE.MeshLambertMaterial({ map: texture } ));
+							sphere.overdraw = true;
+							scene.add(sphere);
+							bullets[bullets.length] = sphere;
+					}
+				});
+				document.addEventListener('keyup', function( ev ) {
+					switch ( ev.keyCode ) {
+						case 37: // left
+							
+							break;
+
+						case 38: // forward
+							velocity=0;
+							break;
+
+						case 39: // right
+							
+							break;
+
+						case 40: // back
+							velocity=0;
+							break;
+					}
+				});
+		
+		
+		
+		
+		setCam();
+						
+		camera.fov *= 1.6;
+		camera.updateProjectionMatrix();
+		
+        animate();
+        
+        
+        
+      </script>
+    </body>
+  </html>
